@@ -1,0 +1,29 @@
+{
+    "button1": {
+        "name": "Kontabel",
+        "registry_key": "HKEY_CURRENT_USER\\Software\\TrinisSoft\\HMS2008",
+        "value_name": "database",
+        "value_data": "kontabel",
+        "program_path": "C:/Program Files (x86)/TrinisSoft/Trinis HMS v. 1.19.55/Hoteli2008.exe"
+    },
+    "button2": {
+        "name": "Kontabel1",
+        "registry_key": "HKEY_CURRENT_USER\\Software\\TrinisSoft\\HMS2008",
+        "value_name": "database",
+        "value_data": "kontabel1",
+        "program_path": "C:/Program Files (x86)/TrinisSoft/Trinis HMS v. 1.19.55/Hoteli2008.exe"
+    },
+    "button3": {
+        "name": "Kontabel2",
+        "registry_key": "HKEY_CURRENT_USER\\Software\\TrinisSoft\\HMS2008",
+        "value_name": "database",
+        "value_data": "kontabel2",
+        "program_path": "C:/Program Files (x86)/TrinisSoft/Trinis HMS v. 1.19.55/Hoteli2008.exe"
+    },
+    "colors": {
+        "bg_color": "#E6F2FF",
+        "button_color": "#99C2FF",
+        "highlight_color": "#66A3FF",
+        "text_color": "#003366"
+    }
+}
