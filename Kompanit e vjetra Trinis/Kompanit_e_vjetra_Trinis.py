@@ -5,11 +5,16 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog, filedialog
 import json
 import tkinter.ttk as ttk
+import hashlib
 
 class ProgramLauncher:
     def __init__(self, root):
         self.root = root
         self.root.title("Program Launcher with Registry Modifier")
+        
+        # Security settings
+        self.max_attempts = 5
+        self.attempts = 0
         
         # Set warm blue color scheme
         self.bg_color = "#E6F2FF"  # Very light blue
@@ -27,9 +32,14 @@ class ProgramLauncher:
         self.create_main_interface()
         self.create_settings_button()
     
+    def hash_password(self, password):
+        """Create a SHA-256 hash of the password"""
+        return hashlib.sha256(password.encode()).hexdigest()
+    
     def load_config(self):
         """Load configuration from file or create default if not exists"""
         default_config = {
+            "password": "",
             "button1": {
                 "name": "Button 1",
                 "registry_key": r"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System",
@@ -73,6 +83,9 @@ class ProgramLauncher:
                 # Add colors section if it doesn't exist
                 if "colors" not in loaded_config:
                     loaded_config["colors"] = default_config["colors"]
+                # Add password field if it doesn't exist
+                if "password" not in loaded_config:
+                    loaded_config["password"] = default_config["password"]
                 return loaded_config
         except (FileNotFoundError, json.JSONDecodeError):
             return default_config
@@ -138,6 +151,56 @@ class ProgramLauncher:
         )
         settings_btn.pack(side=tk.BOTTOM, pady=10)
     
+    def check_password(self):
+        """Check if password is set and verify it"""
+        if not self.config.get("password"):
+            # No password set, ask to create one
+            password = simpledialog.askstring("Set Password", 
+                                            "No password set. Create a new password:",
+                                            show='*')
+            if password:
+                self.config["password"] = self.hash_password(password)
+                self.save_config()
+                return True
+            return False
+        else:
+            # Password exists, verify it
+            if self.attempts >= self.max_attempts:
+                messagebox.showerror("Locked", "Too many attempts. Settings locked.")
+                return False
+                
+            password = simpledialog.askstring("Password Required", 
+                                             "Enter password to access settings:",
+                                             show='*')
+            if password and self.hash_password(password) == self.config["password"]:
+                self.attempts = 0
+                return True
+            else:
+                self.attempts += 1
+                remaining = self.max_attempts - self.attempts
+                messagebox.showerror("Error", 
+                                    f"Wrong password. {remaining} attempts remaining.")
+                return False
+    
+    def change_password(self):
+        """Change the current password"""
+        if not self.check_password():
+            return
+        
+        new_password = simpledialog.askstring("Change Password", 
+                                             "Enter new password:",
+                                             show='*')
+        if new_password:
+            confirm = simpledialog.askstring("Change Password", 
+                                            "Confirm new password:",
+                                            show='*')
+            if new_password == confirm:
+                self.config["password"] = self.hash_password(new_password)
+                self.save_config()
+                messagebox.showinfo("Success", "Password changed successfully")
+            else:
+                messagebox.showerror("Error", "Passwords do not match")
+    
     def modify_registry(self, key_path, value_name, value_data, value_type=winreg.REG_SZ):
         """Modify a Windows registry value"""
         try:
@@ -195,6 +258,9 @@ class ProgramLauncher:
     
     def open_settings(self):
         """Open settings window to configure buttons"""
+        if not self.check_password():
+            return
+        
         settings_window = tk.Toplevel(self.root)
         settings_window.title("Configuration Panel")
         settings_window.configure(bg=self.bg_color)
@@ -314,6 +380,17 @@ class ProgramLauncher:
         text_color_entry.grid(row=3, column=1, padx=5, pady=5, sticky=tk.W)
         text_color_entry.insert(0, self.config["colors"]["text_color"])
         
+        # Password change button
+        pass_btn = tk.Button(
+            parent,
+            text="Change Password",
+            command=self.change_password,
+            bg=self.button_color,
+            fg=self.text_color,
+            activebackground=self.highlight_color
+        )
+        pass_btn.grid(row=4, column=1, pady=10)
+        
         # Save button for color settings
         save_btn = tk.Button(
             parent,
@@ -328,7 +405,7 @@ class ProgramLauncher:
             fg=self.text_color,
             activebackground=self.highlight_color
         )
-        save_btn.grid(row=4, column=1, pady=10)
+        save_btn.grid(row=5, column=1, pady=10)
     
     def browse_for_program(self, entry_widget):
         """Open file dialog to browse for a program"""
